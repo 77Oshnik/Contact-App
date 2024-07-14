@@ -25,7 +25,7 @@ const App = () => {
             ...doc.data(),
           }));
           setContacts(contactsList);
-          setFilteredContacts(contactsList); // Initialize filtered contacts with all contacts
+          setFilteredContacts(contactsList); 
         });
       } catch (error) {
         console.log(error);
