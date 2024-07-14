@@ -1,44 +1,56 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "./Components/Navbar";
 import Search from "./Components/Search";
-import { getFirestore, collection, getDocs } from "firebase/firestore";
+import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "./config/firebase";
 import Contact from "./Components/Contact";
-
+import AddandDelete from "./Components/AddandDelete";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import useDiscoluse from "./hooks/useDiscoluse";
+import NoContactFound from "./Components/NoContactFound";
 
 const App = () => {
-  const [contact, setContact] = useState([]);
+  const [contacts, setContacts] = useState([]);
+  const [filteredContacts, setFilteredContacts] = useState([]);
+  const { isOpen, onClose, onOpen } = useDiscoluse();
 
   useEffect(() => {
-    const getContact = async () => {
+    const getContacts = async () => {
       try {
         const contactRef = collection(db, "Contacts");
-        const contactSnapShot = await getDocs(contactRef);
-        console.log(contactSnapShot);
-        const contactList = contactSnapShot.docs.map((doc) => {
-          return {
-            ...doc.data(),
+        onSnapshot(contactRef, (snapshot) => {
+          const contactsList = snapshot.docs.map((doc) => ({
             id: doc.id,
-          };
+            ...doc.data(),
+          }));
+          setContacts(contactsList);
+          setFilteredContacts(contactsList); // Initialize filtered contacts with all contacts
         });
-        console.log(contactList);
-        setContact(contactList);
       } catch (error) {
         console.log(error);
       }
     };
-    getContact();
+    getContacts();
   }, []);
 
   return (
-    <div className=" max-w-[370px] mx-auto relative">
+    <div className="max-w-[370px] mx-auto relative">
       <Navbar />
-      <Search />
+      <Search
+        onOpen={onOpen}
+        contacts={contacts}
+        setFilteredContacts={setFilteredContacts}
+      />
       <div>
-        {contact.map((contact) => (
-         <Contact key={contact.id} contact={contact}/>
-        ))}
+        {filteredContacts.length > 0 ? filteredContacts.map((contact) => (
+          <Contact key={contact.id} contact={contact} />
+        )) :
+        <NoContactFound/>}
       </div>
+      <AddandDelete isOpen={isOpen} onClose={onClose} />
+      <ToastContainer position="bottom-center" />
+      
     </div>
   );
 };
